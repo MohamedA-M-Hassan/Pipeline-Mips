@@ -15,9 +15,9 @@ endmodule
 
 module Register_ID_EX(clk, control_EX, control_EX_out, control_MEM, control_MEM_out, control_WB, control_WB_out, reg_file_read_data1, reg_file_read_data1_out, reg_file_read_data2, reg_file_read_data2_out, shift, shift_out, rs, rs_out, rt, rt_out, rd, rd_out);
   input clk;
-  input control_EX; output reg control_EX_out;
-  input control_MEM; output reg control_MEM_out;
-  input control_WB; output reg control_WB_out;
+  input control_EX; output reg control_EX_out; // TODO check size
+  input control_MEM; output reg control_MEM_out; // TODO check size
+  input control_WB; output reg control_WB_out; // TODO check size
 
   input [31:0] reg_file_read_data1, reg_file_read_data2; output reg [31:0] reg_file_read_data1_out, reg_file_read_data2_out;
   input [15:0] shift; output reg [15:0] shift_out;
@@ -37,4 +37,23 @@ module Register_ID_EX(clk, control_EX, control_EX_out, control_MEM, control_MEM_
     rd_out = rd;
   end
 endmodule
+
+module Register_EX_MEM(clk, control_MEM, control_MEM_out, control_WB, control_WB_out, alu_output, alu_output_out, reg_file_read_data2, reg_file_read_data2_out, reg_file_write_reg, reg_file_write_reg_out);
+  input clk;
+  input control_MEM; output reg control_MEM_out; // TODO check size
+  input control_WB; output reg control_WB_out; // TODO check size
+
+  input [31:0] alu_output, reg_file_read_data2; output reg [31:0] alu_output_out, reg_file_read_data2_out;
+  input [4:0] reg_file_write_reg; output reg [4:0] reg_file_write_reg_out;
+
+  always @(posedge clk) begin
+    control_MEM_out = control_MEM;
+    control_WB_out = control_WB;
+    alu_output_out = alu_output;
+    reg_file_read_data2_out = reg_file_read_data2;
+    reg_file_write_reg_out = reg_file_write_reg;
+  end
+endmodule
+
+
 
