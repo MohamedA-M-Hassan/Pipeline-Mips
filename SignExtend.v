@@ -10,8 +10,7 @@ module Sign_extend (in , sign , out );
 	
 	else if (sign == 1)  // the other inst that need the sign extend
      	  out = { {16{in[15]}}, in };
- end	
-  
+ end
 endmodule
 
 module SignExtend_testbench();

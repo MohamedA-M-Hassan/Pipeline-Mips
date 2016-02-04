@@ -1,23 +1,13 @@
-module PC(in, clk,  pcWrite ,out );
+module PC(in, clk, freeze ,out);
   input [31:0] in;
-  input clk , pcWrite ;
+  input clk , freeze;
   output reg [31:0] out;
 
-  	always @ (pcWrite)
-	begin
-		if 	(pcWrite == 1'b1)
-		begin
-		// do nothing to freeze 
-		end	
-	end
-	always @(posedge clk)  
-			begin
-		if 	(pcWrite !== 1'b1)			
-		 	 	begin
-				#10 out = in;
-				end
-		
-  	end
+	always @(posedge clk) begin
+		if (freeze !== 1'b1) begin
+      #10 out = in;
+    end
+  end
 
   initial begin
     out = 32'h0000_0000;
@@ -40,16 +30,14 @@ module PC_testbench();
   initial begin
     in = 32'h1010_1010;
     #100
-    pcWrite = 1'b1; 
-	#5
-	in = 32'h1010_1014;
+    pcWrite = 1'b1;
+    #5
+    in = 32'h1010_1014;
     #300
-	pcWrite = 0 ; 
+    pcWrite = 0;
 	
     in = 32'h1010_ffff;
     
     #200 $finish;
   end
-
-  
 endmodule
