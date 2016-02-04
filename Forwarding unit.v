@@ -5,7 +5,7 @@ module ForwardingUnit (MEM_WB_RegWrite ,EX_MEM_RegWrite, EX_MEM_RegisterRd ,
 	
 	output reg [1:0] ForwardA , ForwardB;
 	
-	initial	begin
+	always @(MEM_WB_RegWrite or EX_MEM_RegWrite, EX_MEM_RegisterRd, MEM_WB_RegisterRd, ID_EX_RegisterRs, ID_EX_RegisterRt)	begin
 			// Ex Hazard A
 			if (EX_MEM_RegWrite && (EX_MEM_RegisterRd != 0) && (EX_MEM_RegisterRd == ID_EX_RegisterRs))
 				ForwardA = 2'b10;
