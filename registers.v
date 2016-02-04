@@ -55,5 +55,19 @@ module Register_EX_MEM(clk, control_MEM, control_MEM_out, control_WB, control_WB
   end
 endmodule
 
+module Register_MEM_WB(clk, control_WB, control_WB_out, data_mem_output, data_mem_output_out, alu_output, alu_output_out, reg_file_write_reg, reg_file_write_reg_out);
+  input clk;
+  input control_WB; output reg control_WB_out; // TODO check size
 
+  input [31:0] data_mem_output, alu_output; output reg [31:0] data_mem_output_out, alu_output_out;
+  input [4:0] reg_file_write_reg; output reg [4:0] reg_file_write_reg_out;
 
+  always @(posedge clk) begin
+    control_WB_out = control_WB;
+
+    data_mem_output_out = data_mem_output;
+    alu_output_out = alu_output;
+
+    reg_file_write_reg_out = reg_file_write_reg;
+  end
+endmodule
