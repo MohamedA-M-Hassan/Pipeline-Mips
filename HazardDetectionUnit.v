@@ -1,8 +1,8 @@
 module  HazardDetectionUnit( ID_EX_MemRead , ID_EX_RegisterRt , IF_ID_RegisterRs , IF_ID_RegisterRt ,
-							stall , pcWrite , IF_ID_Write);
+							stall , freeze , IF_ID_Write);
 	
 	input ID_EX_MemRead , ID_EX_RegisterRt , IF_ID_RegisterRs , IF_ID_RegisterRt ;
-	output reg stall , pcWrite , IF_ID_Write ;
+	output reg stall , freeze , IF_ID_Write ;
 
 	initial
 	begin
@@ -11,7 +11,7 @@ module  HazardDetectionUnit( ID_EX_MemRead , ID_EX_RegisterRt , IF_ID_RegisterRs
 			begin
 				
 				stall = 1'b1 ;
-				pcWrite = 1'b1;
+				freeze = 1'b1;
 				IF_ID_Write = 1'b1 ;
 				
 			end	
@@ -19,7 +19,7 @@ module  HazardDetectionUnit( ID_EX_MemRead , ID_EX_RegisterRt , IF_ID_RegisterRs
 			begin
 				
 				stall = 1'b0 ;
-				pcWrite = 1'b0;
+				freeze = 1'b0;
 				IF_ID_Write = 1'b0 ;
 				
 			end
