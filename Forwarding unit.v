@@ -33,3 +33,24 @@ module ForwardingUnit (MEM_WB_RegWrite ,EX_MEM_RegWrite, EX_MEM_RegisterRd ,
 		end		
 		
 endmodule
+
+module ForwardingUnit_test();
+  reg MEM_WB_RegWrite ,EX_MEM_RegWrite, EX_MEM_RegisterRd ,
+						MEM_WB_RegisterRd , ID_EX_RegisterRs , ID_EX_RegisterRt ;
+  wire  ForwardA , ForwardB;
+
+  ForwardingUnit try (MEM_WB_RegWrite ,EX_MEM_RegWrite, EX_MEM_RegisterRd ,
+						MEM_WB_RegisterRd , ID_EX_RegisterRs , ID_EX_RegisterRt , ForwardA , ForwardB);
+
+  initial begin
+    MEM_WB_RegWrite= 1;
+    EX_MEM_RegWrite <= 5;
+    EX_MEM_RegisterRd = 6;
+	ID_EX_RegisterRs =6;
+	#100 
+	MEM_WB_RegWrite = 1;
+	MEM_WB_RegisterRd = 13;
+	MEM_WB_RegisterRd =	12;
+	ID_EX_RegisterRs   =12;
+  end
+endmodule
