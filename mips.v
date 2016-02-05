@@ -14,7 +14,7 @@ module MIPS;
   wire [15:0] ID_shift;
   wire [15:0] EX_shift;
   wire [25:0] jump_address;
-  wire [31:0] ID_reg_file_write_data, ID_reg_file_read_data1, ID_reg_file_read_data2;
+  wire [31:0] ID_reg_file_read_data1, ID_reg_file_read_data2;
   wire [31:0] EX_reg_file_read_data1, EX_reg_file_read_data2;
   wire [31:0] MEM_reg_file_read_data2;
   wire [31:0] WB_reg_file_write_data;
@@ -22,7 +22,7 @@ module MIPS;
   wire [31:0] EX_alu_input_A, EX_alu_input_B;
   wire [31:0] EX_alu_output, MEM_alu_output, WB_alu_output;
   wire EX_alu_zero;
-  wire [31:0] ID_sign_extended_shift;
+  wire [31:0] ID_sign_extended_shift, EX_sign_extended_shift;
   wire [31:0] MEM_data_mem_output, WB_data_mem_output;
   wire [31:0] branch_offset;
   wire [31:0] taken_branch_pc;
@@ -51,6 +51,9 @@ module MIPS;
   wire [1:0] MEM_control_MEM; assign MEM_control_MEM = {MEM_MemRead, MEM_MemWrite};
   wire [2:0] MEM_control_WB; assign MEM_control_WB = {MEM_MemtoReg, MEM_RegWrite};
   wire [2:0] WB_control_WB; assign WB_control_WB = {WB_MemtoReg, WB_RegWrite};
+
+  wire [1:0] EX_Forward_A, EX_Forward_B;
+  wire [31:0] EX_alu_src_mux_output;
   
   wire Comparator_result;
   wire [4:0] EX_Write_Reg, MEM_rt;
@@ -65,32 +68,33 @@ module MIPS;
 
   /////////////////////////////////////////////////
   // IF
-  PC pc_module(in, clk, pc_freeze, );
+  PC pc_module(next_pc, clk, pc_freeze, pc);
   Adder adder_module(pc, 4, IF_pc_plus_4);
   InstructionMemory instruction_memory_module(pc, IF_instruction);
   //////////////////////////////////////////////////
   Register_IF_ID if_id_register(clk, IF_ID_flush, IF_ID_freeze, IF_pc_plus_4, ID_pc_plus_4, IF_instruction, ID_instruction);
   //////////////////////////////////////////////////
   // ID
-  Decoder decoder_module(ID_instruction, opcode, ID_rs, ID_rt, ID_rd, shamt, funct, ID_shift, jump_address);
+  Decoder decoder_module(ID_instruction, opcode, ID_rs, ID_rt, ID_rd, ID_shamt, ID_funct, ID_shift, jump_address);
   Control control_module(opcode, ID_RegDst, ID_Branch, ID_MemRead, ID_MemtoReg, ID_ALUOp, ID_MemWrite, ID_ALUSrc, ID_RegWrite, ID_Jump, ID_SignExtend);
   HazardDetectionUnit mHazardDetectionUnit(Comparator_result, ID_Branch , EX_MemRead, EX_rt, EX_RegWrite, EX_Write_Reg, MEM_MemRead, MEM_rt, ID_rs, ID_rt, control_flush, pc_freeze, IF_ID_freeze, take_branch, IF_ID_flush);
   ShiftLeft2 shift_left_2_module(ID_sign_extended_shift, branch_offset);
   Adder branch_adder_module(ID_pc_plus_4, branch_offset, taken_branch_pc);
   Mux2_32b branch_mux(branch_mux_pc, take_branch, ID_pc_plus_4, taken_branch_pc);
   RegisterFile register_file_module(ID_rs, ID_rt, WB_reg_file_write_reg, WB_reg_file_write_data, RegWrite_unless_jr, clk, ID_reg_file_read_data1, ID_reg_file_read_data2);
+  Comparator mComparator(ID_reg_file_read_data1, ID_reg_file_read_data2, Comparator_result);
   //////////////////////////////////////////////////
   Register_ID_EX mRegister_ID_EX(clk, ID_control_EX, EX_control_EX, ID_control_MEM, EX_control_MEM, ID_control_WB, EX_control_WB, ID_reg_file_read_data1, EX_reg_file_read_data1, ID_reg_file_read_data2, EX_reg_file_read_data2, ID_rs, EX_rs, ID_rt, EX_rt, ID_rd, EX_rd, ID_sign_extended_shift, EX_sign_extended_shift, ID_shamt, EX_shamt, ID_funct, EX_funct);
   //////////////////////////////////////////////////
   // EX
+  ForwardingUnit mForwardingUnit(WB_RegWrite, MEM_RegWrite, MEM_reg_file_write_reg, WB_reg_file_write_reg , EX_rs , EX_rt , EX_Forward_A , EX_Forward_B);
   Mux4_5b reg_dst_mux(EX_reg_file_write_reg, EX_RegDst, EX_rt, EX_rd, 5'd32, 5'bx);
-  Mux2_32b alu_src_mux(EX_alu_input_B, EX_ALUSrc, EX_reg_file_read_data2, EX_sign_extended_shift);
-// TODO sign_extended shift
+  Mux2_32b alu_src_mux(EX_alu_src_mux_output, EX_ALUSrc, EX_reg_file_read_data2, EX_sign_extended_shift);
   ALUControl EX_alu_control_module(EX_alu_control, jr, EX_ALUOp, EX_funct);
-  assign EX_alu_input_A = EX_reg_file_read_data1;
+  Mux4_32b forwarding_A_mux(EX_alu_input_A, EX_Forward_A, EX_reg_file_read_data1, WB_reg_file_write_data, EX_reg_file_read_data1, 32'b0);
+  Mux4_32b forwarding_B_mux(EX_alu_input_B, EX_Forward_B, EX_alu_src_mux_output, WB_reg_file_write_data, MEM_alu_output, 32'b0);
   ALU alu_module(EX_alu_input_A, EX_alu_input_B, EX_alu_control, EX_shamt, EX_alu_output, EX_alu_zero);
-//TODO shamt funct from ID/EX Register
-  
+
   //////////////////////////////////////////////////
   Register_EX_MEM mRegister_EX_MEM(clk, EX_control_MEM, MEM_control_MEM, EX_control_WB, MEM_control_WB, EX_alu_output, MEM_alu_output, EX_reg_file_read_data2, MEM_reg_file_read_data2, EX_reg_file_write_reg, MEM_reg_file_write_reg);
   //////////////////////////////////////////////////
@@ -101,8 +105,8 @@ module MIPS;
   Mux2_32b jump_mux(jump_mux_pc, Jump, branch_mux_pc, jump_pc);
   Mux2_32b jr_mux(next_pc, jr, jump_mux_pc, ID_reg_file_read_data1);
   //////////////////////////////////////////////////
-  Register_MEM_WB mRegister_MEM_WB(clk, MEM_control_WB, RegWrite_unless_jr, MEM_data_mem_output, WB_data_mem_output, MEM_alu_output, WB_alu_output, MEM_reg_file_write_reg, WB_reg_file_write_reg);
+  Register_MEM_WB mRegister_MEM_WB(clk, MEM_control_WB, WB_control_WB, MEM_data_mem_output, WB_data_mem_output, MEM_alu_output, WB_alu_output, MEM_reg_file_write_reg, WB_reg_file_write_reg);
   /////////////////////////////////////////////////
   // WB
-  Mux4_32b mem_to_reg_mux(ID_reg_file_write_data, MEM_MemtoReg, MEM_alu_output, MEM_data_mem_output, pc_plus_4, 32'bx);
+  Mux4_32b mem_to_reg_mux(WB_reg_file_write_data, MEM_MemtoReg, MEM_alu_output, MEM_data_mem_output, ID_pc_plus_4, 32'bx);
 endmodule

@@ -1,4 +1,4 @@
-module PC(in, clk, freeze ,out);
+module PC(in, clk, freeze, out);
   input [31:0] in;
   input clk , freeze;
   output reg [31:0] out;
